@@ -32,30 +32,38 @@ export const Register = async (req, res) => {
 };
 
 export const Login = async (req, res) => {
-  const user = await User.findOne({
-    email: req.body.email,
-  });
-
-  if (!user) {
-    res.json({ status: "error", message: "Invalid user" });
-  }
-
-  const isPasswordValid = await bcrypt.compare(req.body.password, user.password);
-
-  if (isPasswordValid) {
-    const token = jwt.sign(
-      {
-        name: user.name,
-        email: user.email,
-        _id: user._id,
-      },
-      process.env.SECRET
-    );
-
-    return res.json({
-      status: "OK",
-      token: token,
+  const { email, password } = req.body;
+  if (email && password) {
+    const user = await User.findOne({
+      email: email,
     });
+
+    if (!user) {
+      res.json({ status: "error", message: "Invalid user" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      const token = jwt.sign(
+        {
+          name: user.name,
+          email: user.email,
+          _id: user._id,
+        },
+        process.env.SECRET
+      );
+
+      return res.json({
+        user: user,
+        token: token,
+      });
+    } else {
+      return res.json({
+        status: "error",
+        user: false,
+      });
+    }
   } else {
     return res.json({
       status: "error",
